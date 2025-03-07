@@ -92,6 +92,16 @@ impl Media {
                 self.setup(&moov, atom)?;
                 self.moov = Some(moov);
             }
+            mp4::BoxType::PrftBox => {
+                let prft = mp4::PrftBox::read_box(&mut reader, header.size).context("failed to read prft box")?;
+
+                // Put this prft to all tracks
+                for (track_id, track) in self.tracks.iter_mut() {
+                    let mut t_prft = prft.clone();
+                    t_prft.reference_track_id = *track_id;
+                    track.last_prft = t_prft;
+                }
+            }
             mp4::BoxType::MoofBox => {
                 let moof = mp4::MoofBox::read_box(&mut reader, header.size)?;
 
@@ -323,6 +333,10 @@ struct Track {
     // The current segment
     current: Option<SubgroupWriter>,
 
+    // Last PRFT box for this track
+	last_prft: mp4::PrftBox,
+
+
     // The number of units per second.
     timescale: u64,
 
@@ -335,6 +349,7 @@ impl Track {
         Self {
             track: track.groups().unwrap(),
             current: None,
+            last_prft: mp4::PrftBox::default(),
             timescale,
             handler,
         }

@@ -12,6 +12,9 @@ members = [
 ]
 resolver = "2"
 
+[patch.crates-io]
+mp4 = { path = "./third_party/mp4-rust" }
+
 [workspace.dependencies]
 web-transport = "0.3"
 env_logger = "0.11"
